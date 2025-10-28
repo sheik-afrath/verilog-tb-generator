@@ -64,12 +64,12 @@ endmodule
 ## Limitations & Unsupported Syntax
 * This script will FAIL or produce incorrect code if your design file uses:
 
-** ❌ ANSI-Style Ports: (e.g., module my_design (input clk, input [7:0] data_in, ...);)
+   * ❌ ANSI-Style Ports: (e.g., module my_design (input clk, input [7:0] data_in, ...);)
 
-** ❌ Multiple Ports Per Line: (e.g., input a, b;)
+   * ❌ Multiple Ports Per Line: (e.g., input a, b;)
 
-** ❌ inout Ports: These are not recognized.
+   * ❌ inout Ports: These are not recognized.
 
-** ❌ Non-Descending Vectors: It only supports [MSB:0] style (e.g., [7:0]). It will not correctly parse [0:7].
+   * ❌ Non-Descending Vectors: It only supports [MSB:0] style (e.g., [7:0]). It will not correctly parse [0:7].
 
-** ❌ Parameterized Vectors: (e.g., input [WIDTH-1:0] data;)
+   * ❌ Parameterized Vectors: (e.g., input [WIDTH-1:0] data;)
