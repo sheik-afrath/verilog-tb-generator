@@ -14,6 +14,9 @@ substr($tb_f,-2,0,"_tb");
 # This is a flag. We'll assume the design is combinational (1 = true) by default.
 $combo = 1;
 
+# Flag to track if we found a reset port
+$rst_found = 0;
+
 # Declare an empty array to store the names of all input ports (e.g., "data", "clk").
 @in;
 # Declare an empty array to store the *widths* of those input ports (e.g., "7", "1").
@@ -71,7 +74,7 @@ while(<FH1>) {
 # --- Parsing is done. Now, figure out what we found. ---
 
 # Check if a clock signal exists.
-for ($i=0; $i<@in; $i++) {
+for ($i = $#in; $i >= 0; $i--) {
     # Loop through all the input names we found.
     if ($in[$i] eq "clk" or $in[$i] eq "clock") {
         # If we find "clk" or "clock"...
@@ -83,18 +86,23 @@ for ($i=0; $i<@in; $i++) {
         $clk = $in[$i]; 
         
         # Copy the full input list (with the clock) into @inm for module instantiation.
-        @inm = @in; 
+        @inm = @in;
+		# Copy it's corresponding widths
+		@inm_w = @in_w;
         
         # Remove the clock from the main @in list, so we don't try to assign it random values later.
-        splice(@in,$i,1); 
+        splice(@in,$i,1);
+        # Splice the width array to keep them in sync
+        splice(@in_w,$i,1); 
     }
 }
 
 # Check for a reset signal (looping through the *remaining* inputs).
-for ($i=0; $i<@in; $i++) {
+for ($i = $#in; $i >= 0; $i--) {
     
     # Check for an active-high reset.
     if ($in[$i] eq "rst" or $in[$i] eq "reset") {
+		$rst_found = 1;
         # Set the active value to 1.
         $rst_active = 1;
         # Set the inactive value to 0.
@@ -108,6 +116,7 @@ for ($i=0; $i<@in; $i++) {
     }
     # Check for an active-low reset (Note: rst_n should be in quotes).
     elsif ($in[$i] eq "rst_n" or $in[$i] eq "reset_n") {
+		$rst_found = 1;
         # Set the active value to 0.
         $rst_active = 0;
         # Set the inactive value to 1.
@@ -137,19 +146,20 @@ print FH2 "\n";
 # If the circuit was purely combinational...
 if ($combo == 1) {
     # ...then the module input list is just the @in list (no clock was removed).
-    @inm = @in; 
+    @inm = @in;
+	@inm_w = @in_w;
 }
 # Loop through the module's input list (this one *includes* clock and reset).
 for ($i=0; $i<@inm; $i++) {
     # Check if the width is our special '1' (meaning 1-bit).
-    if ($in_w[$i] == 1) {
+    if ($inm_w[$i] == 1) {
         # Print a simple 'reg' declaration (e.g., "reg clk;").
-        print FH2 "reg $in[$i]\;\n"
+        print FH2 "reg $inm[$i]\;\n"
     }
     # Otherwise, it's a vector.
     else {
         # Print a vector 'reg' declaration (e.g., "reg [7:0]data;").
-        print FH2 "reg [$in_w[$i]:0]$in[$i]\;\n"
+        print FH2 "reg [$inm_w[$i]:0]$inm[$i]\;\n"
     }
 }
 
@@ -217,12 +227,16 @@ print FH2 "\n";
 if ($combo == 0) {
     # Start the clock at 0.
     print FH2 "$clk = 1\'b0\;\n";
-    # Start the reset in its inactive state.
-    print FH2 "$rst = 1\'b$n_rst_active\;\n";
-    # Wait 10 time units, then assert the reset (active state).
-    print FH2 "#10 $rst = 1\'b$rst_active\;\n";
-    # Wait 10 more time units, then de-assert the reset (back to inactive).
-    print FH2 "#10 $rst = 1\'b$n_rst_active\;\n\n";
+	
+	# Only print reset logic if a reset was found
+    if ($rst_found) {
+        # Start the reset in its inactive state. (Added \t)
+        print FH2 "$rst = 1\'b$n_rst_active\;\n";
+        # Wait 10 time units, then assert the reset (active state). (Added \t)
+        print FH2 "#10 $rst = 1\'b$rst_active\;\n";
+        # Wait 10 more time units, then de-assert the reset (back to inactive). (Added \t)
+        print FH2 "#10 $rst = 1\'b$n_rst_active\;\n\n";
+    }
 }
 
 # Start an outer loop that will run 10 times, creating 10 test vectors.
@@ -249,7 +263,7 @@ for($i=0; $i<10; $i++) {
 		
         # Print the final Verilog line to the testbench file.
         # This will look like: "data_in = 8'd123;" or "enable = 1'd1;".
-		print FH2 "$in[$j] = $width_for_rand\'d$random\;\n";
+		print FH2 "\t$in[$j] = $width_for_rand\'d$random\;\n";
 	}
     
     # After all inputs are assigned for this time step, print a blank line
