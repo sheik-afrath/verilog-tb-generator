@@ -47,7 +47,6 @@ module my_design (
     result_out
 );
 
-    // These will be parsed correctly:
     input clk;
     input rst_n;
     input [7:0] data_in;
