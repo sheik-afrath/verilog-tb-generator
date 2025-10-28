@@ -34,12 +34,10 @@ This is a simple Perl script that automatically generates a basic Verilog testbe
 
 ## Supported Port Syntax
 
-This script relies on regular expressions to parse the Verilog file. It will **only** work correctly with the following port declaration style:
+* This script relies on regular expressions to parse the Verilog file. It will work correctly with any design that declares one port per line.
+* This includes both non-ANSI and ANSI styles.
 
-* **Non-ANSI Style:** Ports must be declared *inside* the module body, not in the module header.
-* **One Port Per Line:** You must declare only one port on each line.
-
-✅ **Correct / Supported Examples:**
+✅ **Supported Example 1 (Non-ANSI Style):**
 
 ```verilog
 module my_design (
@@ -55,21 +53,30 @@ module my_design (
     input [7:0] data_in;
     output reg [3:0] result_out;
 
-
-
     // ... design logic ...
+endmodule
+```
+
+✅ **Supported Example 2 (ANSI Style)**
+
+```verilog
+module my_design (
+    input clk,
+    input rst_n,
+    input [7:0] data_in,
+    output reg [3:0] result_out
+);
+   // ... design logic ...
 endmodule
 ```
 
 ## Limitations & Unsupported Syntax
 * This script will FAIL or produce incorrect code if your design file uses:
 
-   * ❌ ANSI-Style Ports: (e.g., module my_design (input clk, input [7:0] data_in, ...);)
-
-   * ❌ Multiple Ports Per Line: (e.g., input a, b;)
+   * ❌ Multiple Ports Per Line: (e.g., `input a, b;` or `input clk, input rst_n,`)
 
    * ❌ inout Ports: These are not recognized.
 
-   * ❌ Non-Descending Vectors: It only supports [MSB:0] style (e.g., [7:0]). It will not correctly parse [0:7].
+   * ❌ Non-Descending Vectors: It only supports `[MSB:0]` style (e.g., `[7:0])`. It will not correctly parse `[0:7]`.
 
-   * ❌ Parameterized Vectors: (e.g., input [WIDTH-1:0] data;)
+   * ❌ Parameterized Vectors: (e.g., `input [WIDTH-1:0] data;`)
