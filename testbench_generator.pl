@@ -43,7 +43,7 @@ while(<FH1>) {
     }
     # Else, check if the line is an input port declaration.
     # This regex is smart: it optionally matches a vector width [XX:0].
-    elsif($_ =~ /\s*input\s+(?:\[\s*(\d+):\d+\s*\])?\s*(\w+).+/) {
+    elsif($_ =~ /\s*input\s+\w*\s*(?:\[\s*(\d+):\d+\s*\])?\s*(\w+).+/) {		
         # The (.+) at the end matches the rest of the line (like a comma or semicolon).
         
         # This is a ternary operator. 
